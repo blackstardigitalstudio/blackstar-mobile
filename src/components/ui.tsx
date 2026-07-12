@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -163,43 +164,43 @@ export function Field({
 }) {
   const [focused, setFocused] = React.useState(false);
   const [show, setShow] = React.useState(false);
-  const inputRef = React.useRef<TextInput>(null);
+  const active = focused;
+  // IMPORTANT (mobile): the TextInput is NOT wrapped in a Pressable/Focusable.
+  // On Android, a TextInput nested inside a touchable fights over the touch
+  // responder — taps get swallowed, the field won't focus, and sibling
+  // touchables can fire together. The input is directly tappable on its own.
   return (
-    <Focusable onSelect={() => inputRef.current?.focus()} style={{ borderRadius: radius.md }} focusStyle={{}}>
-      {() => {
-        const active = focused;
-        return (
-        <View style={{ gap: 6 }}>
-          <Txt variant="small" color={active ? colors.accent : colors.textMuted}>
-            {label}
-          </Txt>
-          <View style={[styles.fieldWrap, active && styles.fieldWrapActive]}>
-            <TextInput
-              ref={inputRef}
-              value={value}
-              onChangeText={onChangeText}
-              placeholder={placeholder}
-              placeholderTextColor={colors.textFaint}
-              secureTextEntry={secureTextEntry && !show}
-              keyboardType={keyboardType}
-              autoCapitalize={autoCapitalize}
-              autoCorrect={false}
-              autoFocus={autoFocus}
-              returnKeyType="next"
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              style={[styles.input, secureTextEntry && { paddingRight: 52 }, active && styles.inputActive]}
-            />
-            {secureTextEntry ? (
-              <Focusable onSelect={() => setShow((v) => !v)} style={styles.eye} focusStyle={{ borderColor: colors.borderFocus, borderWidth: 1 }}>
-                {(f) => <Ionicons name={show ? 'eye-off' : 'eye'} size={22} color={f ? colors.accent : colors.textMuted} />}
-              </Focusable>
-            ) : null}
-          </View>
-        </View>
-        );
-      }}
-    </Focusable>
+    <View style={{ gap: 6 }}>
+      <Txt variant="small" color={active ? colors.accent : colors.textMuted}>
+        {label}
+      </Txt>
+      <View style={[styles.fieldWrap, active && styles.fieldWrapActive]}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textFaint}
+          secureTextEntry={secureTextEntry && !show}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
+          autoFocus={autoFocus}
+          returnKeyType="next"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={[styles.input, secureTextEntry && { paddingRight: 52 }, active && styles.inputActive]}
+        />
+        {secureTextEntry ? (
+          <Pressable
+            onPress={() => setShow((v) => !v)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.eye, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name={show ? 'eye-off' : 'eye'} size={22} color={colors.textMuted} />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 }
 

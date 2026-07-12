@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { FocusScrollView } from '@/tv/FocusScroll';
 import { Rail } from '@/components/Rail';
 import { Empty, Txt } from '@/components/ui';
@@ -57,34 +57,24 @@ export default function Search() {
     <View style={{ flex: 1 }}>
       <View style={styles.searchBar}>
         <Ionicons name="search" size={22} color={colors.textMuted} />
-        <Focusable
+        {/* Direct TextInput — never wrap in a touchable on mobile (Android
+            responder conflict swallows taps and blocks typing). */}
+        <TextInput
+          ref={inputRef}
+          value={q}
+          onChangeText={setQ}
+          placeholder={t('search.ph')}
+          placeholderTextColor={colors.textFaint}
+          autoCorrect={false}
           autoFocus
-          onSelect={() => inputRef.current?.focus()}
-          onFocus={() => inputRef.current?.focus()}
-          style={{ flex: 1 }}
-          focusStyle={{}}
-        >
-          {(ring, focusSelf) => (
-            <TextInput
-              ref={inputRef}
-              value={q}
-              onChangeText={setQ}
-              placeholder={t('search.ph')}
-              placeholderTextColor={colors.textFaint}
-              autoCorrect={false}
-              onFocus={() => {
-                setFocused(true);
-                focusSelf();
-              }}
-              onBlur={() => setFocused(false)}
-              style={[styles.input, (focused || ring) && { borderColor: colors.borderFocus }]}
-            />
-          )}
-        </Focusable>
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={[styles.input, { flex: 1 }, focused && { borderColor: colors.borderFocus }]}
+        />
         {q ? (
-          <Focusable onSelect={() => setQ('')} style={styles.clear} focusStyle={{ borderColor: colors.borderFocus }}>
+          <Pressable onPress={() => setQ('')} hitSlop={10} style={({ pressed }) => [styles.clear, pressed && { opacity: 0.6 }]}>
             <Ionicons name="close" size={18} color={colors.textMuted} />
-          </Focusable>
+          </Pressable>
         ) : null}
       </View>
 

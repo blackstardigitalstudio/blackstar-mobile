@@ -133,33 +133,26 @@ export default function Vpn() {
           {t('vpn.import')}
         </Txt>
         <View style={{ gap: spacing.sm }}>
-          <Focusable onSelect={() => nameRef.current?.focus()} onFocus={() => nameRef.current?.focus()} focusStyle={{}}>
-            {(ring) => (
-              <TextInput
-                ref={nameRef}
-                value={name}
-                onChangeText={setName}
-                placeholder={t('vpn.nameOpt')}
-                placeholderTextColor={colors.textFaint}
-                style={[styles.input, ring && { borderColor: colors.borderFocus }]}
-              />
-            )}
-          </Focusable>
-          <Focusable onSelect={() => confRef.current?.focus()} onFocus={() => confRef.current?.focus()} focusStyle={{}}>
-            {(ring) => (
-              <TextInput
-                ref={confRef}
-                value={conf}
-                onChangeText={setConf}
-                placeholder={t('vpn.paste')}
-                placeholderTextColor={colors.textFaint}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[styles.input, styles.textarea, ring && { borderColor: colors.borderFocus }]}
-              />
-            )}
-          </Focusable>
+          {/* Direct TextInputs — no touchable wrapper on mobile (Android taps). */}
+          <TextInput
+            ref={nameRef}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('vpn.nameOpt')}
+            placeholderTextColor={colors.textFaint}
+            style={styles.input}
+          />
+          <TextInput
+            ref={confRef}
+            value={conf}
+            onChangeText={setConf}
+            placeholder={t('vpn.paste')}
+            placeholderTextColor={colors.textFaint}
+            multiline
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={[styles.input, styles.textarea]}
+          />
           {err ? (
             <Txt variant="small" color={colors.danger}>
               {err}
