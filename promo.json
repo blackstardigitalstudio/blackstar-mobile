@@ -3,11 +3,11 @@
   "seconds": 5,
   "rotate": [
     {
-      "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-clara.png",
+      "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-clara.png?v=es",
       "link": "https://cuentas-clara.com"
     },
     {
-      "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/teknosteps.png",
+      "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/teknosteps.png?v=es",
       "link": "https://teknosteps.com"
     }
   ]

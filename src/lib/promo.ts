@@ -36,11 +36,11 @@ async function fetchJsonTimeout(url: string, ms: number): Promise<any> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   try {
-    // Bust GitHub's raw CDN cache so a freshly-edited promo.json shows up quickly.
-    const res = await fetch(`${url}?t=${Date.now()}`, {
-      signal: ctrl.signal,
-      headers: { 'cache-control': 'no-cache' },
-    });
+    // Bust GitHub's raw CDN cache with a query param only. Do NOT add a
+    // `cache-control` request header: it isn't CORS-safelisted, so on the web
+    // build it would trigger an OPTIONS preflight that raw.githubusercontent
+    // doesn't answer, making the fetch fail. The `?t=` is enough.
+    const res = await fetch(`${url}?t=${Date.now()}`, { signal: ctrl.signal });
     if (!res.ok) throw new Error(`http ${res.status}`);
     return await res.json();
   } finally {

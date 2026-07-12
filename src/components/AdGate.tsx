@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useT } from '@/i18n';
 import { loadPromo, promoItems, promoSeconds, type PromoItem } from '@/lib/promo';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -16,6 +16,8 @@ type Phase = 'loading' | 'ad' | 'done';
  * page. Mandatory short wait, no skip, then the app proceeds. If there is nothing
  * to show or the network is down, it gets out of the way immediately.
  *
+ * Rendered as a full-screen absolute overlay (not a Modal — more reliable across
+ * platforms) sitting inside the root flex:1 view, so it covers the whole app.
  * The opaque backdrop doubles as the startup loading screen, so the user never
  * sees a half-rendered app flash before the ad. Made in Italy.
  */
@@ -24,32 +26,33 @@ export function AdGate() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [item, setItem] = useState<PromoItem | null>(null);
   const [remaining, setRemaining] = useState(5);
-  const started = useRef(false);
 
   // Decide once: fetch promo, pick a banner, preload its image (bounded), else bail.
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
     let alive = true;
     (async () => {
-      const promo = await loadPromo();
-      const items = promo ? promoItems(promo) : [];
-      if (!alive) return;
-      if (!promo || !items.length) {
-        setPhase('done');
-        return;
+      try {
+        const promo = await loadPromo();
+        const items = promo ? promoItems(promo) : [];
+        if (!alive) return;
+        if (!promo || !items.length) {
+          setPhase('done');
+          return;
+        }
+        const chosen = items[Math.floor(Math.random() * items.length)];
+        // Don't show a blank frame: wait for the image, but cap the wait so a slow
+        // asset can never hold the app hostage.
+        await Promise.race([
+          Image.prefetch(chosen.image).catch(() => {}),
+          new Promise((r) => setTimeout(r, 2500)),
+        ]);
+        if (!alive) return;
+        setRemaining(promoSeconds(promo));
+        setItem(chosen);
+        setPhase('ad');
+      } catch {
+        if (alive) setPhase('done');
       }
-      const chosen = items[Math.floor(Math.random() * items.length)];
-      // Don't show a blank frame: wait for the image, but cap the wait so a slow
-      // asset can never hold the app hostage.
-      await Promise.race([
-        Image.prefetch(chosen.image).catch(() => {}),
-        new Promise((r) => setTimeout(r, 2500)),
-      ]);
-      if (!alive) return;
-      setRemaining(promoSeconds(promo));
-      setItem(chosen);
-      setPhase('ad');
     })();
     return () => {
       alive = false;
@@ -79,39 +82,46 @@ export function AdGate() {
   };
 
   return (
-    <Modal visible transparent={false} animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
-      <View style={styles.screen}>
-        {phase === 'loading' || !item ? (
-          <View style={styles.center}>
-            <BrandMark size={40} />
-            <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: spacing.xl }} />
+    <View style={styles.overlay} pointerEvents="auto">
+      {phase === 'loading' || !item ? (
+        <View style={styles.center}>
+          <BrandMark size={40} />
+          <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: spacing.xl }} />
+        </View>
+      ) : (
+        <>
+          <Pressable style={styles.imageWrap} onPress={open} disabled={!item.link}>
+            <Image source={item.image} style={styles.image} contentFit="contain" transition={200} />
+            {item.link ? (
+              <View style={styles.tapHint}>
+                <Txt variant="small" color={colors.white}>
+                  {t('ad.tap')}
+                </Txt>
+              </View>
+            ) : null}
+          </Pressable>
+          <View style={styles.badge}>
+            <Txt variant="tiny" color={colors.white}>
+              {t('ad.label')} · {t('ad.starting', { n: remaining })}
+            </Txt>
           </View>
-        ) : (
-          <>
-            <Pressable style={styles.imageWrap} onPress={open} disabled={!item.link}>
-              <Image source={item.image} style={styles.image} contentFit="contain" transition={200} />
-              {item.link ? (
-                <View style={styles.tapHint}>
-                  <Txt variant="small" color={colors.white}>
-                    {t('ad.tap')}
-                  </Txt>
-                </View>
-              ) : null}
-            </Pressable>
-            <View style={styles.badge}>
-              <Txt variant="tiny" color={colors.white}>
-                {t('ad.label')} · {t('ad.starting', { n: remaining })}
-              </Txt>
-            </View>
-          </>
-        )}
-      </View>
-    </Modal>
+        </>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
+    backgroundColor: colors.bg,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   imageWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   image: { width: '100%', height: '100%' },
