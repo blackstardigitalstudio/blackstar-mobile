@@ -4,12 +4,12 @@ import * as IntentLauncher from 'expo-intent-launcher';
 import { APP_VERSION, UPDATE_REPO } from './version';
 
 // Auto-update straight from the user's own GitHub Releases — no external server,
-// no store, no account. The CI publishes `blackstar-player.apk` + `version.json`
+// no store, no account. The CI publishes `blackstar-mobile.apk` + `version.json`
 // to the "latest" release; these stable URLs always point at the newest build.
 // Pinned to the fixed `latest` TAG (not the "latest release" pointer), so a
 // future semver-tagged release can never redirect these to the wrong asset.
 const VERSION_URL = `https://github.com/${UPDATE_REPO}/releases/download/latest/version.json`;
-const APK_URL = `https://github.com/${UPDATE_REPO}/releases/download/latest/blackstar-player.apk`;
+const APK_URL = `https://github.com/${UPDATE_REPO}/releases/download/latest/blackstar-mobile.apk`;
 
 export interface UpdateInfo {
   version: string;
