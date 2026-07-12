@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RemoteProvider } from '@/tv/RemoteProvider';
+import { AdGate } from '@/components/AdGate';
 import { UpdateGate } from '@/components/UpdateGate';
 import { useStore } from '@/store/useStore';
 import { colors } from '@/theme/tokens';
@@ -51,6 +52,7 @@ export default function RootLayout() {
               <Stack.Screen name="vpn" />
             </Stack>
             <UpdateGate />
+            <AdGate />
           </RemoteProvider>
         </ThemeProvider>
       </SafeAreaProvider>

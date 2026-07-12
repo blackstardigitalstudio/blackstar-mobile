@@ -129,6 +129,9 @@ const it: Dict = {
   'upd.upToDate': 'L’app è già aggiornata.',
   'upd.checkFailed': 'Impossibile controllare gli aggiornamenti. Riprova più tardi.',
   'upd.installHint': 'La prima volta Android chiederà di consentire l’installazione da questa app.',
+  'ad.label': 'Pubblicità',
+  'ad.tap': 'Tocca per aprire',
+  'ad.starting': 'Si parte tra {n}s',
   'player.internal': 'Interno',
   'player.ask': 'Chiedi sempre',
 
@@ -346,6 +349,9 @@ const es: Dict = {
   'upd.upToDate': 'La app ya está actualizada.',
   'upd.checkFailed': 'No se pudo comprobar actualizaciones. Inténtalo más tarde.',
   'upd.installHint': 'La primera vez Android pedirá permitir la instalación desde esta app.',
+  'ad.label': 'Publicidad',
+  'ad.tap': 'Toca para abrir',
+  'ad.starting': 'Empieza en {n}s',
   'player.internal': 'Interno',
   'player.ask': 'Preguntar siempre',
 
