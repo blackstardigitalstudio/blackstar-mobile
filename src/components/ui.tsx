@@ -13,7 +13,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Focusable } from '@/tv/Focusable';
 import { colors, font, gradients, radius, spacing } from '@/theme/tokens';
 
@@ -44,10 +44,22 @@ export function Txt({ children, style, variant = 'body', color, numberOfLines }:
 }
 
 export function Screen({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  // Use the safe-area INSETS hook + a plain View instead of the SafeAreaView
+  // component: on the New Architecture (Fabric) the SafeAreaView component can
+  // desync its touch hit-boxes from where children paint, so a tap lands on the
+  // element below the one you see. Padding via the hook keeps paint and touch
+  // aligned.
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={[styles.screen, style]} edges={['top', 'bottom', 'left', 'right']}>
+    <View
+      style={[
+        styles.screen,
+        { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right },
+        style,
+      ]}
+    >
       {children}
-    </SafeAreaView>
+    </View>
   );
 }
 
