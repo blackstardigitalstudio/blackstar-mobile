@@ -39,7 +39,10 @@ export function AdGate() {
           setPhase('done');
           return;
         }
-        const chosen = items[Math.floor(Math.random() * items.length)];
+        // Daily rotation: the same banner shows all day, a different one each day,
+        // cycling through the list — "ogni giorno una notizia/pagina nuova".
+        const dayIndex = Math.floor(Date.now() / 86_400_000);
+        const chosen = items[dayIndex % items.length];
         // Don't show a blank frame: wait for the image, but cap the wait so a slow
         // asset can never hold the app hostage.
         await Promise.race([
