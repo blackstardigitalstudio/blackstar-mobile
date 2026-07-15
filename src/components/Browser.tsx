@@ -113,6 +113,20 @@ export function Browser({
     return items.filter((i) => favIds.has(i.id));
   }, [favorites, items]);
 
+  // Recently-watched items of THIS section, in watch order (most recent first),
+  // limited to entries still present in the current list → "Visti di recente"
+  // folder for quick re-access and to reflect what you like.
+  const recents = useStore((s) => s.recents);
+  const recentItems = useMemo(() => {
+    const byId = new Map(items.map((i) => [i.id, i]));
+    const out: MediaItem[] = [];
+    for (const r of recents) {
+      const it = byId.get(r.id);
+      if (it) out.push(it);
+    }
+    return out;
+  }, [recents, items]);
+
   // Folder view: which folder is open. null = show the folder grid.
   const [openCat, setOpenCat] = useState<string | null>(null);
   // Chip view (movies/series): selected chip.
@@ -121,23 +135,31 @@ export function Browser({
   // If the list refreshes and the selected category id disappears, fall back so the
   // grid never ends up mysteriously empty.
   useEffect(() => {
-    if (openCat === 'fav') {
-      if (!favItems.length) setOpenCat(null);
-    } else if (openCat && openCat !== 'all' && !cats.some((c) => c.id === openCat)) {
-      setOpenCat(null);
-    }
-    if (sel !== 'all' && !cats.some((c) => c.id === sel)) setSel('all');
-  }, [cats, openCat, sel, favItems.length]);
+    // folders mode (openCat)
+    if (openCat === 'fav' && !favItems.length) setOpenCat(null);
+    else if (openCat === 'recent' && !recentItems.length) setOpenCat(null);
+    else if (openCat && openCat !== 'all' && openCat !== 'fav' && openCat !== 'recent' && !cats.some((c) => c.id === openCat)) setOpenCat(null);
+    // chip mode (sel)
+    if (sel === 'fav' && !favItems.length) setSel('all');
+    else if (sel === 'recent' && !recentItems.length) setSel('all');
+    else if (sel !== 'all' && sel !== 'fav' && sel !== 'recent' && !cats.some((c) => c.id === sel)) setSel('all');
+  }, [cats, openCat, sel, favItems.length, recentItems.length]);
 
   if (!items.length) {
     return <Empty title={t('br.empty', { title })} hint={t('br.emptyHint')} />;
   }
 
   const filteredBy = (id: string) =>
-    id === 'all' ? items : id === 'fav' ? favItems : items.filter((i) => i.categoryId === id);
+    id === 'all'
+      ? items
+      : id === 'fav'
+        ? favItems
+        : id === 'recent'
+          ? recentItems
+          : items.filter((i) => i.categoryId === id);
 
   // ---- FOLDERS MODE (Live): categories as big folders, then their channels. ----
-  if (folders && (cats.length || favItems.length)) {
+  if (folders && (cats.length || favItems.length || recentItems.length)) {
     // Level 2: channels inside the chosen folder, with a clear "back to folders" bar.
     if (openCat) {
       const folderName =
@@ -145,7 +167,9 @@ export function Browser({
           ? t('br.allChannels')
           : openCat === 'fav'
             ? t('br.favorites')
-            : cats.find((c) => c.id === openCat)?.name ?? title;
+            : openCat === 'recent'
+              ? t('br.recent')
+              : cats.find((c) => c.id === openCat)?.name ?? title;
       const channels = filteredBy(openCat);
       const header = (
         <View>
@@ -168,13 +192,29 @@ export function Browser({
       return <MediaGrid items={channels} onSelect={onSelect} variant={variant} header={header} />;
     }
 
-    // Level 1: the folder grid ("⭐ Preferiti" if any, then "Tutti i canali" + one folder per category).
-    return <FolderGrid title={title} total={items.length} cats={cats} counts={counts} favCount={favItems.length} topInset={insets.top} onOpen={setOpenCat} />;
+    // Level 1: the folder grid (Preferiti / Visti di recente first, then Tutti + categories).
+    return (
+      <FolderGrid
+        title={title}
+        total={items.length}
+        cats={cats}
+        counts={counts}
+        favCount={favItems.length}
+        recentCount={recentItems.length}
+        topInset={insets.top}
+        onOpen={setOpenCat}
+      />
+    );
   }
 
-  // ---- CHIP MODE (movies / series): unchanged. ----
-  const data = [{ id: 'all', name: t('common.all') }, ...cats.map((c) => ({ id: c.id, name: c.name }))];
-  const filtered = sel === 'all' ? items : items.filter((i) => i.categoryId === sel);
+  // ---- CHIP MODE (movies / series): quick "Preferiti" / "Visti di recente" chips first. ----
+  const data = [
+    ...(favItems.length ? [{ id: 'fav', name: t('br.favorites') }] : []),
+    ...(recentItems.length ? [{ id: 'recent', name: t('br.recent') }] : []),
+    { id: 'all', name: t('common.all') },
+    ...cats.map((c) => ({ id: c.id, name: c.name })),
+  ];
+  const filtered = filteredBy(sel);
   const header = (
     <View>
       <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, paddingTop: insets.top + spacing.sm, marginBottom: spacing.sm }}>
@@ -204,6 +244,7 @@ function FolderGrid({
   cats,
   counts,
   favCount,
+  recentCount,
   topInset,
   onOpen,
 }: {
@@ -212,6 +253,7 @@ function FolderGrid({
   cats: Category[];
   counts: Map<string, number>;
   favCount: number;
+  recentCount: number;
   topInset: number;
   onOpen: (id: string) => void;
 }) {
@@ -222,9 +264,11 @@ function FolderGrid({
   const cols = Math.max(2, Math.floor((width - pad * 2 + gap) / (170 + gap)));
   const tileW = Math.floor((width - pad * 2 - gap * (cols - 1)) / cols);
 
-  // "⭐ Preferiti" first (if any), then "Tutti i canali", then a folder per category.
+  // "⭐ Preferiti" and "Visti di recente" first (if any), then "Tutti i canali",
+  // then a folder per category.
   const tiles = [
     ...(favCount > 0 ? [{ id: 'fav', name: t('br.favorites'), count: favCount, icon: 'heart' as any }] : []),
+    ...(recentCount > 0 ? [{ id: 'recent', name: t('br.recent'), count: recentCount, icon: 'time' as any }] : []),
     { id: 'all', name: t('br.allChannels'), count: total, icon: 'tv' as any },
     ...cats.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0, icon: iconForCategory(c.name) })),
   ];
