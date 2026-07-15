@@ -104,6 +104,15 @@ export function Browser({
     return m;
   }, [items]);
 
+  // Favourite channels present in this list → their own "⭐ Preferiti" folder,
+  // shown first. Intersect with `items` so we play a fresh entry (and never show a
+  // stale favourite that no longer exists in the current source).
+  const favorites = useStore((s) => s.favorites);
+  const favItems = useMemo(() => {
+    const favIds = new Set(favorites.map((f) => f.id));
+    return items.filter((i) => favIds.has(i.id));
+  }, [favorites, items]);
+
   // Folder view: which folder is open. null = show the folder grid.
   const [openCat, setOpenCat] = useState<string | null>(null);
   // Chip view (movies/series): selected chip.
@@ -112,21 +121,31 @@ export function Browser({
   // If the list refreshes and the selected category id disappears, fall back so the
   // grid never ends up mysteriously empty.
   useEffect(() => {
-    if (openCat && openCat !== 'all' && !cats.some((c) => c.id === openCat)) setOpenCat(null);
+    if (openCat === 'fav') {
+      if (!favItems.length) setOpenCat(null);
+    } else if (openCat && openCat !== 'all' && !cats.some((c) => c.id === openCat)) {
+      setOpenCat(null);
+    }
     if (sel !== 'all' && !cats.some((c) => c.id === sel)) setSel('all');
-  }, [cats, openCat, sel]);
+  }, [cats, openCat, sel, favItems.length]);
 
   if (!items.length) {
     return <Empty title={t('br.empty', { title })} hint={t('br.emptyHint')} />;
   }
 
-  const filteredBy = (id: string) => (id === 'all' ? items : items.filter((i) => i.categoryId === id));
+  const filteredBy = (id: string) =>
+    id === 'all' ? items : id === 'fav' ? favItems : items.filter((i) => i.categoryId === id);
 
   // ---- FOLDERS MODE (Live): categories as big folders, then their channels. ----
-  if (folders && cats.length) {
+  if (folders && (cats.length || favItems.length)) {
     // Level 2: channels inside the chosen folder, with a clear "back to folders" bar.
     if (openCat) {
-      const folderName = openCat === 'all' ? t('br.allChannels') : cats.find((c) => c.id === openCat)?.name ?? title;
+      const folderName =
+        openCat === 'all'
+          ? t('br.allChannels')
+          : openCat === 'fav'
+            ? t('br.favorites')
+            : cats.find((c) => c.id === openCat)?.name ?? title;
       const channels = filteredBy(openCat);
       const header = (
         <View>
@@ -149,8 +168,8 @@ export function Browser({
       return <MediaGrid items={channels} onSelect={onSelect} variant={variant} header={header} />;
     }
 
-    // Level 1: the folder grid ("Tutti i canali" + one folder per category).
-    return <FolderGrid title={title} total={items.length} cats={cats} counts={counts} topInset={insets.top} onOpen={setOpenCat} />;
+    // Level 1: the folder grid ("⭐ Preferiti" if any, then "Tutti i canali" + one folder per category).
+    return <FolderGrid title={title} total={items.length} cats={cats} counts={counts} favCount={favItems.length} topInset={insets.top} onOpen={setOpenCat} />;
   }
 
   // ---- CHIP MODE (movies / series): unchanged. ----
@@ -184,6 +203,7 @@ function FolderGrid({
   total,
   cats,
   counts,
+  favCount,
   topInset,
   onOpen,
 }: {
@@ -191,6 +211,7 @@ function FolderGrid({
   total: number;
   cats: Category[];
   counts: Map<string, number>;
+  favCount: number;
   topInset: number;
   onOpen: (id: string) => void;
 }) {
@@ -201,8 +222,9 @@ function FolderGrid({
   const cols = Math.max(2, Math.floor((width - pad * 2 + gap) / (170 + gap)));
   const tileW = Math.floor((width - pad * 2 - gap * (cols - 1)) / cols);
 
-  // "Tutti i canali" always first, then a folder per category.
+  // "⭐ Preferiti" first (if any), then "Tutti i canali", then a folder per category.
   const tiles = [
+    ...(favCount > 0 ? [{ id: 'fav', name: t('br.favorites'), count: favCount, icon: 'heart' as any }] : []),
     { id: 'all', name: t('br.allChannels'), count: total, icon: 'tv' as any },
     ...cats.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0, icon: iconForCategory(c.name) })),
   ];
