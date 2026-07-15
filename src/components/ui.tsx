@@ -237,13 +237,13 @@ const styles = StyleSheet.create({
   },
   ghostFocus: { borderColor: colors.borderFocus, backgroundColor: colors.surfaceHi },
   fieldWrap: { justifyContent: 'center', borderRadius: radius.md },
-  fieldWrapActive: {
-    // Strong, unmistakable highlight for the selected field on a 10-foot screen.
-    shadowColor: colors.accent,
-    shadowOpacity: 0.9,
-    shadowRadius: 14,
-    elevation: 10,
-  },
+  // IMPORTANT (Android/Fabric): the focused highlight must change COLOR ONLY.
+  // Changing borderWidth / elevation / shadow on focus forces the native view to
+  // re-layout & re-layer, which drops the TextInput's focus → onBlur → the style
+  // reverts → focus returns → onFocus … an endless blur/focus loop that made the
+  // fields flicker "all pressed at once" and blocked typing. No layout-affecting
+  // props here — accent border colour + a lighter fill is highlight enough.
+  fieldWrapActive: {},
   input: {
     backgroundColor: colors.surface,
     borderWidth: 2,
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
     fontSize: font.body,
   },
   inputActive: {
+    // Colour-only: same borderWidth (2) as the base — never changes layout.
     borderColor: colors.borderFocus,
-    borderWidth: 2.5,
     backgroundColor: colors.surfaceHi,
   },
   eye: {
