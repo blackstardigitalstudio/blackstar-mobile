@@ -76,6 +76,11 @@ const it: Dict = {
 
   'br.empty': 'Nessun contenuto in {title}',
   'br.emptyHint': 'Aggiorna la lista o cambia profilo dalle Impostazioni.',
+  'br.folders': 'Categorie',
+  'br.allChannels': 'Tutti i canali',
+  'br.channelsCount': '{n} canali',
+  'br.backToFolders': 'Categorie',
+  'br.pickFolder': 'Scegli una categoria',
 
   'title.live': 'Live TV',
   'title.movies': 'Film',
@@ -296,6 +301,11 @@ const es: Dict = {
 
   'br.empty': 'No hay contenido en {title}',
   'br.emptyHint': 'Actualiza la lista o cambia de perfil en Ajustes.',
+  'br.folders': 'Categorías',
+  'br.allChannels': 'Todos los canales',
+  'br.channelsCount': '{n} canales',
+  'br.backToFolders': 'Categorías',
+  'br.pickFolder': 'Elige una categoría',
 
   'title.live': 'TV en vivo',
   'title.movies': 'Películas',

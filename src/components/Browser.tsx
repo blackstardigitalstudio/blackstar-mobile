@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Focusable } from '@/tv/Focusable';
 import { useT } from '@/i18n';
 import { useStore } from '@/store/useStore';
@@ -19,6 +21,54 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
+/** A friendly icon guessed from the category name (recognise, don't read). */
+function iconForCategory(name: string): any {
+  const n = name.toLowerCase();
+  if (/(sport|calcio|football|f[uú]tbol|deporte|tennis|basket|motogp|f1)/.test(n)) return 'football';
+  if (/(news|notizi|notici|tg\b|24h|24\/7|meteo)/.test(n)) return 'newspaper';
+  if (/(kid|bimb|bambin|cartoon|infantil|ni[nñ]o|junior|disney)/.test(n)) return 'happy';
+  if (/(cinema|film|movie|pel[ií]cul|cine)/.test(n)) return 'film';
+  if (/(music|m[uú]sic|radio|hits)/.test(n)) return 'musical-notes';
+  if (/(serie|show|entertain|intratten)/.test(n)) return 'albums';
+  if (/(doc|natur|planet|discovery|history|storia)/.test(n)) return 'planet';
+  if (/(adult|xxx|18\+|\+18|porn)/.test(n)) return 'lock-closed';
+  return 'tv';
+}
+
+/** Big tappable category folder tile: icon + name + channel count. */
+function FolderTile({
+  name,
+  count,
+  icon,
+  width,
+  onPress,
+}: {
+  name: string;
+  count: number;
+  icon: any;
+  width: number;
+  onPress: () => void;
+}) {
+  const t = useT();
+  return (
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: 'rgba(217,70,239,0.18)' }}
+      style={({ pressed }) => [styles.folder, { width }, pressed && { opacity: 0.6 }]}
+    >
+      <View style={styles.folderIcon}>
+        <Ionicons name={icon} size={26} color={colors.accent} />
+      </View>
+      <Txt variant="body" numberOfLines={2} style={{ fontWeight: '700', marginTop: spacing.sm }}>
+        {name}
+      </Txt>
+      <Txt variant="small" color={colors.textMuted} style={{ marginTop: 2 }}>
+        {t('br.channelsCount', { n: count })}
+      </Txt>
+    </Pressable>
+  );
+}
+
 export function Browser({
   title,
   items,
@@ -26,6 +76,7 @@ export function Browser({
   kind,
   onSelect,
   variant,
+  folders,
 }: {
   title: string;
   items: MediaItem[];
@@ -33,8 +84,11 @@ export function Browser({
   kind: MediaKind;
   onSelect: (item: MediaItem) => void;
   variant: 'poster' | 'tile';
+  /** When true, show category FOLDERS first; tapping one opens its channels. */
+  folders?: boolean;
 }) {
   const t = useT();
+  const insets = useSafeAreaInsets();
   const order = useStore((s) => s.settings.categoryOrder);
   const manual = useStore((s) => s.settings.categoryManual);
   const taste = useStore((s) => s.taste);
@@ -42,23 +96,69 @@ export function Browser({
     () => sortCategories(categories.filter((c) => c.kind === kind), order, taste, manual),
     [categories, kind, order, taste, manual],
   );
+
+  // How many channels each category holds (also decides if a folder is worth showing).
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of items) if (i.categoryId) m.set(i.categoryId, (m.get(i.categoryId) ?? 0) + 1);
+    return m;
+  }, [items]);
+
+  // Folder view: which folder is open. null = show the folder grid.
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  // Chip view (movies/series): selected chip.
   const [sel, setSel] = useState<string>('all');
 
-  const filtered = useMemo(
-    () => (sel === 'all' ? items : items.filter((i) => i.categoryId === sel)),
-    [items, sel],
-  );
+  // If the list refreshes and the selected category id disappears, fall back so the
+  // grid never ends up mysteriously empty.
+  useEffect(() => {
+    if (openCat && openCat !== 'all' && !cats.some((c) => c.id === openCat)) setOpenCat(null);
+    if (sel !== 'all' && !cats.some((c) => c.id === sel)) setSel('all');
+  }, [cats, openCat, sel]);
 
   if (!items.length) {
     return <Empty title={t('br.empty', { title })} hint={t('br.emptyHint')} />;
   }
 
-  const data = [{ id: 'all', name: t('common.all') }, ...cats.map((c) => ({ id: c.id, name: c.name }))];
+  const filteredBy = (id: string) => (id === 'all' ? items : items.filter((i) => i.categoryId === id));
 
-  // Mobile: title + a horizontal, scrollable chip bar of categories, then the grid.
+  // ---- FOLDERS MODE (Live): categories as big folders, then their channels. ----
+  if (folders && cats.length) {
+    // Level 2: channels inside the chosen folder, with a clear "back to folders" bar.
+    if (openCat) {
+      const folderName = openCat === 'all' ? t('br.allChannels') : cats.find((c) => c.id === openCat)?.name ?? title;
+      const channels = filteredBy(openCat);
+      const header = (
+        <View>
+          <Pressable
+            onPress={() => setOpenCat(null)}
+            android_ripple={{ color: 'rgba(255,255,255,0.08)' }}
+            hitSlop={8}
+            style={({ pressed }) => [styles.backRow, { paddingTop: insets.top + spacing.sm }, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.accent} />
+            <Txt variant="small" color={colors.accent} style={{ fontWeight: '700' }}>
+              {t('br.backToFolders')}
+            </Txt>
+          </Pressable>
+          <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
+            {folderName} <Txt variant="small" color={colors.textFaint}>{`· ${channels.length}`}</Txt>
+          </Txt>
+        </View>
+      );
+      return <MediaGrid items={channels} onSelect={onSelect} variant={variant} header={header} />;
+    }
+
+    // Level 1: the folder grid ("Tutti i canali" + one folder per category).
+    return <FolderGrid title={title} total={items.length} cats={cats} counts={counts} topInset={insets.top} onOpen={setOpenCat} />;
+  }
+
+  // ---- CHIP MODE (movies / series): unchanged. ----
+  const data = [{ id: 'all', name: t('common.all') }, ...cats.map((c) => ({ id: c.id, name: c.name }))];
+  const filtered = sel === 'all' ? items : items.filter((i) => i.categoryId === sel);
   const header = (
     <View>
-      <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, marginBottom: spacing.sm }}>
+      <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, paddingTop: insets.top + spacing.sm, marginBottom: spacing.sm }}>
         {title} <Txt variant="small" color={colors.textFaint}>{`· ${items.length}`}</Txt>
       </Txt>
       <ScrollView
@@ -78,6 +178,58 @@ export function Browser({
   return <MediaGrid items={filtered} onSelect={onSelect} variant={variant} header={header} />;
 }
 
+/** The folder grid — 2 columns of big, tappable category tiles. */
+function FolderGrid({
+  title,
+  total,
+  cats,
+  counts,
+  topInset,
+  onOpen,
+}: {
+  title: string;
+  total: number;
+  cats: Category[];
+  counts: Map<string, number>;
+  topInset: number;
+  onOpen: (id: string) => void;
+}) {
+  const t = useT();
+  const { width } = useWindowDimensions();
+  const pad = spacing.lg;
+  const gap = spacing.md;
+  const cols = Math.max(2, Math.floor((width - pad * 2 + gap) / (170 + gap)));
+  const tileW = Math.floor((width - pad * 2 - gap * (cols - 1)) / cols);
+
+  // "Tutti i canali" always first, then a folder per category.
+  const tiles = [
+    { id: 'all', name: t('br.allChannels'), count: total, icon: 'tv' as any },
+    ...cats.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0, icon: iconForCategory(c.name) })),
+  ];
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={[styles.folderHeader, { paddingTop: topInset + spacing.sm }]}>
+        <Txt variant="h2">
+          {title} <Txt variant="small" color={colors.textFaint}>{`· ${total}`}</Txt>
+        </Txt>
+        <Txt variant="small" color={colors.textMuted} style={{ marginTop: 2 }}>
+          {t('br.pickFolder')}
+        </Txt>
+      </View>
+      <ScrollView
+        contentContainerStyle={styles.folderGrid}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {tiles.map((tile) => (
+          <FolderTile key={tile.id} name={tile.name} count={tile.count} icon={tile.icon} width={tileW} onPress={() => onOpen(tile.id)} />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   chipBar: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingVertical: spacing.xs },
   chip: {
@@ -90,4 +242,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  folderHeader: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
+  folderGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxl,
+  },
+  folder: {
+    minHeight: 120,
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    justifyContent: 'center',
+  },
+  folderIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceHi,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+    alignSelf: 'flex-start',
+  },
 });
