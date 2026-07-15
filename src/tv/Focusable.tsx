@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-nat
 interface Props {
   onSelect?: () => void;
   onFocus?: () => void;
+  onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
   focusStyle?: StyleProp<ViewStyle>;
   focusKey?: string;
@@ -19,11 +20,12 @@ interface Props {
 
 const noop = () => {};
 
-export function Focusable({ onSelect, style, disabled, children }: Props) {
+export function Focusable({ onSelect, onLongPress, style, disabled, children }: Props) {
   return (
     <Pressable
       disabled={disabled}
       onPress={onSelect}
+      onLongPress={onLongPress}
       android_ripple={{ color: 'rgba(217,70,239,0.18)' }}
       style={({ pressed }) => [style, pressed && styles.pressed]}
     >

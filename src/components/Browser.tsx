@@ -11,12 +11,27 @@ import type { Category, MediaItem, MediaKind } from '@/lib/types';
 import { MediaGrid } from './Rail';
 import { Empty, Txt } from './ui';
 
-function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function Chip({
+  label,
+  active,
+  pinned,
+  onPress,
+  onLongPress,
+}: {
+  label: string;
+  active: boolean;
+  pinned?: boolean;
+  onPress: () => void;
+  onLongPress?: () => void;
+}) {
   return (
-    <Focusable onSelect={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Txt variant="small" numberOfLines={1} color={active ? colors.onAccent : colors.textMuted} style={{ fontWeight: '600' }}>
-        {label}
-      </Txt>
+    <Focusable onSelect={onPress} onLongPress={onLongPress} style={[styles.chip, active && styles.chipActive]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        {pinned ? <Ionicons name="star" size={12} color={active ? colors.onAccent : colors.accent} /> : null}
+        <Txt variant="small" numberOfLines={1} color={active ? colors.onAccent : colors.textMuted} style={{ fontWeight: '600' }}>
+          {label}
+        </Txt>
+      </View>
     </Focusable>
   );
 }
@@ -41,21 +56,31 @@ function FolderTile({
   count,
   icon,
   width,
+  pinned,
   onPress,
+  onLongPress,
 }: {
   name: string;
   count: number;
   icon: any;
   width: number;
+  pinned?: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
 }) {
   const t = useT();
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       android_ripple={{ color: 'rgba(217,70,239,0.18)' }}
-      style={({ pressed }) => [styles.folder, { width }, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [styles.folder, { width }, pinned && styles.folderPinned, pressed && { opacity: 0.6 }]}
     >
+      {pinned ? (
+        <View style={styles.pinBadge}>
+          <Ionicons name="star" size={14} color={colors.accent} />
+        </View>
+      ) : null}
       <View style={styles.folderIcon}>
         <Ionicons name={icon} size={26} color={colors.accent} />
       </View>
@@ -91,10 +116,12 @@ export function Browser({
   const insets = useSafeAreaInsets();
   const order = useStore((s) => s.settings.categoryOrder);
   const manual = useStore((s) => s.settings.categoryManual);
+  const pins = useStore((s) => s.settings.categoryPins);
+  const togglePin = useStore((s) => s.toggleCategoryPin);
   const taste = useStore((s) => s.taste);
   const cats = useMemo(
-    () => sortCategories(categories.filter((c) => c.kind === kind), order, taste, manual),
-    [categories, kind, order, taste, manual],
+    () => sortCategories(categories.filter((c) => c.kind === kind), order, taste, manual, pins),
+    [categories, kind, order, taste, manual, pins],
   );
 
   // How many channels each category holds (also decides if a folder is worth showing).
@@ -201,6 +228,8 @@ export function Browser({
         counts={counts}
         favCount={favItems.length}
         recentCount={recentItems.length}
+        pins={pins}
+        onTogglePin={togglePin}
         topInset={insets.top}
         onOpen={setOpenCat}
       />
@@ -227,9 +256,19 @@ export function Browser({
         contentContainerStyle={styles.chipBar}
         style={{ marginBottom: spacing.xs }}
       >
-        {data.map((c) => (
-          <Chip key={c.id} label={c.name} active={sel === c.id} onPress={() => setSel(c.id)} />
-        ))}
+        {data.map((c) => {
+          const special = c.id === 'all' || c.id === 'fav' || c.id === 'recent';
+          return (
+            <Chip
+              key={c.id}
+              label={c.name}
+              active={sel === c.id}
+              pinned={!special && pins.includes(c.id)}
+              onPress={() => setSel(c.id)}
+              onLongPress={special ? undefined : () => togglePin(c.id)}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -245,6 +284,8 @@ function FolderGrid({
   counts,
   favCount,
   recentCount,
+  pins,
+  onTogglePin,
   topInset,
   onOpen,
 }: {
@@ -254,6 +295,8 @@ function FolderGrid({
   counts: Map<string, number>;
   favCount: number;
   recentCount: number;
+  pins: string[];
+  onTogglePin: (id: string) => void;
   topInset: number;
   onOpen: (id: string) => void;
 }) {
@@ -288,9 +331,21 @@ function FolderGrid({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {tiles.map((tile) => (
-          <FolderTile key={tile.id} name={tile.name} count={tile.count} icon={tile.icon} width={tileW} onPress={() => onOpen(tile.id)} />
-        ))}
+        {tiles.map((tile) => {
+          const special = tile.id === 'all' || tile.id === 'fav' || tile.id === 'recent';
+          return (
+            <FolderTile
+              key={tile.id}
+              name={tile.name}
+              count={tile.count}
+              icon={tile.icon}
+              width={tileW}
+              pinned={!special && pins.includes(tile.id)}
+              onPress={() => onOpen(tile.id)}
+              onLongPress={special ? undefined : () => onTogglePin(tile.id)}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -309,6 +364,8 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   folderHeader: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
+  folderPinned: { borderColor: colors.accent },
+  pinBadge: { position: 'absolute', top: spacing.sm, right: spacing.sm },
   folderGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
