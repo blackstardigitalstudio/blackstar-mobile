@@ -4,27 +4,27 @@
   "rotate": [
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-clara.png?v=c2",
-      "link": "https://cuentas-clara.com"
+      "link": "https://www.cuentas-clara.com/"
     },
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-ranking.png?v=c2",
-      "link": "https://cuentas-clara.com/ranking/"
+      "link": "https://www.cuentas-clara.com/"
     },
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-records.png?v=c2",
-      "link": "https://cuentas-clara.com/records/"
+      "link": "https://www.cuentas-clara.com/"
     },
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-sueldos.png?v=c2",
-      "link": "https://cuentas-clara.com/sueldos-politicos/"
+      "link": "https://www.cuentas-clara.com/"
     },
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-deuda.png?v=c2",
-      "link": "https://cuentas-clara.com/deuda-municipios/"
+      "link": "https://www.cuentas-clara.com/"
     },
     {
       "image": "https://raw.githubusercontent.com/blackstardigitalstudio/blackstar-mobile/main/promo/cuentas-escandalos.png?v=c2",
-      "link": "https://cuentas-clara.com/escandalos/"
+      "link": "https://www.cuentas-clara.com/"
     }
   ]
 }
