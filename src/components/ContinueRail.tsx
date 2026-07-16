@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import React, { useRef } from 'react';
+import { FlatList, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Focusable } from '@/tv/Focusable';
 import { useT } from '@/i18n';
 import { colors, gradients, radius, spacing } from '@/theme/tokens';
@@ -79,6 +80,43 @@ export function ContinueRail({ entries, onSelect }: { entries: ProgressEntry[]; 
         )}
       />
     </View>
+  );
+}
+
+/** Vertical grid of the same resume cards — used by the "Continua a guardare"
+ * folder inside Film / Serie so you can jump back into a half-watched title. */
+export function ContinueGrid({
+  entries,
+  onSelect,
+  header,
+}: {
+  entries: ProgressEntry[];
+  onSelect: (e: ProgressEntry) => void;
+  header?: React.ReactElement;
+}) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const pad = spacing.lg;
+  const gap = spacing.md;
+  // Cards are a fixed width, so pick the most columns that actually FIT (never
+  // force a count that would overflow a narrow phone).
+  const cols = Math.max(2, Math.floor((width - pad * 2 + gap) / (POSTER_W + gap)));
+  return (
+    <FlatList
+      data={entries}
+      key={`cont-${cols}`}
+      numColumns={cols}
+      keyExtractor={(e) => e.key}
+      ListHeaderComponent={header}
+      columnWrapperStyle={{ gap, paddingHorizontal: pad }}
+      contentContainerStyle={{ gap, paddingTop: spacing.sm, paddingBottom: insets.bottom + spacing.xxl }}
+      showsVerticalScrollIndicator={false}
+      renderItem={({ item }) => (
+        <Pressable onPress={() => onSelect(item)} android_ripple={{ color: 'rgba(217,70,239,0.15)' }}>
+          <Card entry={item} focused={false} />
+        </Pressable>
+      )}
+    />
   );
 }
 

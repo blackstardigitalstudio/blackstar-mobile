@@ -7,8 +7,9 @@ import { useT } from '@/i18n';
 import { useStore } from '@/store/useStore';
 import { sortCategories } from '@/lib/categories';
 import { colors, radius, spacing } from '@/theme/tokens';
-import type { Category, MediaItem, MediaKind } from '@/lib/types';
+import type { Category, MediaItem, MediaKind, ProgressEntry } from '@/lib/types';
 import { MediaGrid } from './Rail';
+import { ContinueGrid } from './ContinueRail';
 import { Empty, Txt } from './ui';
 
 function Chip({
@@ -106,6 +107,7 @@ export function Browser({
   categories,
   kind,
   onSelect,
+  onResume,
   variant,
   folders,
 }: {
@@ -114,6 +116,8 @@ export function Browser({
   categories: Category[];
   kind: MediaKind;
   onSelect: (item: MediaItem) => void;
+  /** Resume a half-watched title from its saved position ("Continua a guardare"). */
+  onResume?: (e: ProgressEntry) => void;
   variant: 'poster' | 'tile';
   /** When true, show category FOLDERS first; tapping one opens its channels. */
   folders?: boolean;
@@ -160,6 +164,21 @@ export function Browser({
     return out;
   }, [recents, items]);
 
+  // In-progress titles of THIS section → "Continua a guardare" folder. Films are
+  // saved as 'movie' (keyed by id), series episodes as 'episode' — same entries
+  // the Home rail resumes from. Live is never saved.
+  const progress = useStore((s) => s.progress);
+  const contKind = kind === 'movie' ? 'movie' : kind === 'series' ? 'episode' : null;
+  const continueEntries = useMemo(
+    () =>
+      contKind
+        ? Object.values(progress)
+            .filter((p) => p.position > 5 && p.kind === contKind)
+            .sort((a, b) => b.updatedAt - a.updatedAt)
+        : [],
+    [progress, contKind],
+  );
+
   // Folder view: which folder is open. null = show the folder grid.
   const [openCat, setOpenCat] = useState<string | null>(null);
   // Chip view (movies/series): selected chip.
@@ -171,7 +190,8 @@ export function Browser({
     // folders mode (openCat)
     if (openCat === 'fav' && !favItems.length) setOpenCat(null);
     else if (openCat === 'recent' && !recentItems.length) setOpenCat(null);
-    else if (openCat && openCat !== 'all' && openCat !== 'fav' && openCat !== 'recent' && !cats.some((c) => c.id === openCat)) setOpenCat(null);
+    else if (openCat === 'continue' && !continueEntries.length) setOpenCat(null);
+    else if (openCat && openCat !== 'all' && openCat !== 'fav' && openCat !== 'recent' && openCat !== 'continue' && !cats.some((c) => c.id === openCat)) setOpenCat(null);
     // chip mode (sel)
     if (sel === 'fav' && !favItems.length) setSel('all');
     else if (sel === 'recent' && !recentItems.length) setSel('all');
@@ -196,9 +216,10 @@ export function Browser({
           : items.filter((i) => i.categoryId === id);
 
   // ---- FOLDERS MODE (Live): categories as big folders, then their channels. ----
-  if (folders && (cats.length || favItems.length || recentItems.length)) {
+  if (folders && (cats.length || favItems.length || recentItems.length || continueEntries.length)) {
     // Level 2: channels inside the chosen folder, with a clear "back to folders" bar.
     if (openCat) {
+      const isCont = openCat === 'continue';
       const folderName =
         openCat === 'all'
           ? allLabel
@@ -206,8 +227,11 @@ export function Browser({
             ? t('br.favorites')
             : openCat === 'recent'
               ? t('br.recent')
-              : cats.find((c) => c.id === openCat)?.name ?? title;
-      const channels = filteredBy(openCat);
+              : isCont
+                ? t('home.continue')
+                : cats.find((c) => c.id === openCat)?.name ?? title;
+      const channels = isCont ? [] : filteredBy(openCat);
+      const count = isCont ? continueEntries.length : channels.length;
       const header = (
         <View>
           <Pressable
@@ -222,10 +246,13 @@ export function Browser({
             </Txt>
           </Pressable>
           <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
-            {folderName} <Txt variant="small" color={colors.textFaint}>{`· ${t(countKey, { n: channels.length })}`}</Txt>
+            {folderName} <Txt variant="small" color={colors.textFaint}>{`· ${t(countKey, { n: count })}`}</Txt>
           </Txt>
         </View>
       );
+      if (isCont) {
+        return <ContinueGrid entries={continueEntries} onSelect={(e) => onResume?.(e)} header={header} />;
+      }
       return <MediaGrid items={channels} onSelect={onSelect} variant={variant} header={header} />;
     }
 
@@ -238,6 +265,7 @@ export function Browser({
         counts={counts}
         favCount={favItems.length}
         recentCount={recentItems.length}
+        continueCount={continueEntries.length}
         pins={pins}
         onTogglePin={togglePin}
         allLabel={allLabel}
@@ -297,6 +325,7 @@ function FolderGrid({
   counts,
   favCount,
   recentCount,
+  continueCount,
   pins,
   onTogglePin,
   allLabel,
@@ -311,6 +340,7 @@ function FolderGrid({
   counts: Map<string, number>;
   favCount: number;
   recentCount: number;
+  continueCount: number;
   pins: string[];
   onTogglePin: (id: string) => void;
   allLabel: string;
@@ -329,6 +359,7 @@ function FolderGrid({
   // "⭐ Preferiti" and "Visti di recente" first (if any), then "Tutti i canali",
   // then a folder per category.
   const tiles = [
+    ...(continueCount > 0 ? [{ id: 'continue', name: t('home.continue'), count: continueCount, icon: 'play-circle' as any }] : []),
     ...(favCount > 0 ? [{ id: 'fav', name: t('br.favorites'), count: favCount, icon: 'heart' as any }] : []),
     ...(recentCount > 0 ? [{ id: 'recent', name: t('br.recent'), count: recentCount, icon: 'time' as any }] : []),
     { id: 'all', name: allLabel, count: total, icon: 'apps' as any },
@@ -351,7 +382,7 @@ function FolderGrid({
         keyboardShouldPersistTaps="handled"
       >
         {tiles.map((tile) => {
-          const special = tile.id === 'all' || tile.id === 'fav' || tile.id === 'recent';
+          const special = tile.id === 'all' || tile.id === 'fav' || tile.id === 'recent' || tile.id === 'continue';
           return (
             <FolderTile
               key={tile.id}
