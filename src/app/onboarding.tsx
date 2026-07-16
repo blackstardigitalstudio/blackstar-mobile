@@ -116,7 +116,8 @@ export default function Onboarding() {
 
   return (
     <Screen>
-      <FocusScrollView contentContainerStyle={styles.wrap}>
+      <View style={{ flex: 1 }}>
+        <FocusScrollView contentContainerStyle={styles.wrap}>
         {editId ? (
           <View style={{ marginBottom: spacing.md }}>
             <GhostButton label={t('common.back')} icon="arrow-back" onPress={() => router.back()} />
@@ -186,6 +187,16 @@ export default function Onboarding() {
             </>
           )}
 
+        </View>
+
+        <Txt variant="tiny" style={{ marginTop: spacing.lg, maxWidth: 520 }}>
+          {t('ob.disclaimer')}
+        </Txt>
+        </FocusScrollView>
+
+        {/* Primary action pinned to the bottom (thumb zone): always reachable
+            without scrolling the long form, and it rises above the keyboard. */}
+        <View style={styles.footer}>
           {error ? (
             <View style={styles.error}>
               <Ionicons name="alert-circle" size={18} color={colors.danger} />
@@ -194,16 +205,9 @@ export default function Onboarding() {
               </Txt>
             </View>
           ) : null}
-
-          <View style={{ marginTop: spacing.sm }}>
-            <PrimaryButton label={busy ? t('ob.connecting') : editId ? t('ob.save') : t('ob.login')} icon={editId ? 'save' : 'log-in'} onPress={busy ? () => {} : submit} autoFocus />
-          </View>
+          <PrimaryButton label={busy ? t('ob.connecting') : editId ? t('ob.save') : t('ob.login')} icon={editId ? 'save' : 'log-in'} onPress={busy ? () => {} : submit} autoFocus />
         </View>
-
-        <Txt variant="tiny" style={{ marginTop: spacing.lg, maxWidth: 520 }}>
-          {t('ob.disclaimer')}
-        </Txt>
-      </FocusScrollView>
+      </View>
     </Screen>
   );
 }
@@ -225,6 +229,18 @@ function ModeChip({ label, icon, active, onPress }: { label: string; icon: any; 
 
 const styles = StyleSheet.create({
   wrap: { padding: spacing.xl, maxWidth: 640, width: '100%', alignSelf: 'center' },
+  footer: {
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.bg,
+  },
   tabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   kbHint: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, BackHandler, StyleSheet, View } from 'react-native';
+import { Alert, BackHandler, RefreshControl, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FocusScrollView } from '@/tv/FocusScroll';
 import { ContinueRail } from '@/components/ContinueRail';
@@ -174,7 +174,17 @@ export default function Home() {
           }
         />
       ) : (
-        <FocusScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }}>
+        <FocusScrollView
+          contentContainerStyle={{ paddingBottom: spacing.xxl }}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={() => useStore.getState().refresh(true)}
+              tintColor={colors.accent}
+              colors={[colors.accent]}
+            />
+          }
+        >
           {/* Big category folders */}
           <View style={styles.folders}>
             {folders.map((fld) => (

@@ -442,13 +442,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Full-width, taller tap target (Fitts): the whole top row goes back, not just
+  // the small chevron+label. Easier to hit with a thumb than a tiny corner link.
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
-    alignSelf: 'flex-start',
+    paddingBottom: spacing.sm,
   },
 });
