@@ -46,6 +46,10 @@ function iconForCategory(name: string): any {
   if (/(music|m[uú]sic|radio|hits)/.test(n)) return 'musical-notes';
   if (/(serie|show|entertain|intratten)/.test(n)) return 'albums';
   if (/(doc|natur|planet|discovery|history|storia)/.test(n)) return 'planet';
+  if (/(cucin|food|cook|gastro|chef|recip)/.test(n)) return 'restaurant';
+  if (/(viagg|travel|viaje|turism)/.test(n)) return 'airplane';
+  if (/(relig|church|chiesa|iglesia|cristian|islam|gospel)/.test(n)) return 'book';
+  if (/(lifestyle|fashion|moda|shopping|casa|home)/.test(n)) return 'shirt';
   if (/(adult|xxx|18\+|\+18|porn)/.test(n)) return 'lock-closed';
   return 'tv';
 }
@@ -218,7 +222,7 @@ export function Browser({
             </Txt>
           </Pressable>
           <Txt variant="h2" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
-            {folderName} <Txt variant="small" color={colors.textFaint}>{`· ${channels.length}`}</Txt>
+            {folderName} <Txt variant="small" color={colors.textFaint}>{`· ${t(countKey, { n: channels.length })}`}</Txt>
           </Txt>
         </View>
       );
@@ -327,7 +331,7 @@ function FolderGrid({
   const tiles = [
     ...(favCount > 0 ? [{ id: 'fav', name: t('br.favorites'), count: favCount, icon: 'heart' as any }] : []),
     ...(recentCount > 0 ? [{ id: 'recent', name: t('br.recent'), count: recentCount, icon: 'time' as any }] : []),
-    { id: 'all', name: allLabel, count: total, icon: 'tv' as any },
+    { id: 'all', name: allLabel, count: total, icon: 'apps' as any },
     ...cats.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0, icon: iconForCategory(c.name) })),
   ];
 
@@ -335,7 +339,7 @@ function FolderGrid({
     <View style={{ flex: 1 }}>
       <View style={[styles.folderHeader, { paddingTop: topInset + spacing.sm }]}>
         <Txt variant="h2">
-          {title} <Txt variant="small" color={colors.textFaint}>{`· ${total}`}</Txt>
+          {title} <Txt variant="small" color={colors.textFaint}>{`· ${t(countKey, { n: total })}`}</Txt>
         </Txt>
         <Txt variant="small" color={colors.textMuted} style={{ marginTop: 2 }}>
           {t('br.pickFolder')}

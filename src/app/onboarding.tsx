@@ -132,6 +132,10 @@ export default function Onboarding() {
           <LanguagePicker />
         </View>
 
+        {/* One plain line so the first choice is obvious, not a blind guess. */}
+        <Txt variant="small" color={colors.textMuted} style={{ marginBottom: spacing.sm }}>
+          {t('ob.chooseHint')}
+        </Txt>
         <View style={styles.tabs}>
           <ModeChip label={t('ob.xtream')} icon="key" active={mode === 'xtream'} onPress={() => setMode('xtream')} />
           <ModeChip label={t('ob.m3u')} icon="link" active={mode === 'm3u'} onPress={() => setMode('m3u')} />
