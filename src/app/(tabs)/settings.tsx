@@ -6,6 +6,7 @@ import { PinModal } from '@/components/PinModal';
 import { Txt } from '@/components/ui';
 import { Focusable } from '@/tv/Focusable';
 import { FocusScrollView } from '@/tv/FocusScroll';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { useStore, type PlayerMode } from '@/store/useStore';
 import { openCastSettings } from '@/lib/cast';
 import { requestUpdateCheck } from '@/lib/updater';
@@ -129,6 +130,14 @@ export default function Settings() {
         {t('set.title')}
       </Txt>
 
+      {/* Language first and unmissable: two flag chips (Italiano / Español). */}
+      <Txt variant="small" color={colors.accent} style={{ marginLeft: spacing.lg, marginBottom: 6, textTransform: 'uppercase' }}>
+        {t('set.language')}
+      </Txt>
+      <View style={{ marginBottom: spacing.lg }}>
+        <LanguagePicker />
+      </View>
+
       <Section title={t('set.secUsers')}>
         <Row
           icon="people"
@@ -215,12 +224,6 @@ export default function Settings() {
       </Section>
 
       <Section title={t('set.secInterface')}>
-        <Row
-          icon="language"
-          label={t('set.language')}
-          value={s.settings.language === 'it' ? 'Italiano' : 'Español'}
-          onPress={() => s.updateSettings({ language: s.settings.language === 'it' ? 'es' : 'it' })}
-        />
         <Row
           icon="swap-vertical"
           label={t('set.catOrder')}

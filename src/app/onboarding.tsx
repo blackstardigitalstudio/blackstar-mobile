@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { BrandMark, Field, GhostButton, PrimaryButton, Screen, Txt } from '@/components/ui';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { Focusable } from '@/tv/Focusable';
 import { FocusScrollView } from '@/tv/FocusScroll';
 import { useStore } from '@/store/useStore';
@@ -122,9 +123,14 @@ export default function Onboarding() {
           </View>
         ) : null}
         <BrandMark size={34} />
-        <Txt variant="small" style={{ marginTop: 4, marginBottom: spacing.lg }}>
+        <Txt variant="small" style={{ marginTop: 4, marginBottom: spacing.md }}>
           {t('ob.tagline')}
         </Txt>
+
+        {/* Language first: pick Italiano or Español right away (flags = instantly clear). */}
+        <View style={{ marginBottom: spacing.lg }}>
+          <LanguagePicker />
+        </View>
 
         <View style={styles.tabs}>
           <ModeChip label={t('ob.xtream')} icon="key" active={mode === 'xtream'} onPress={() => setMode('xtream')} />
