@@ -224,6 +224,13 @@ export default function Player() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        // Live: don't silently resume when the user comes back — that felt like
+        // the app "kept playing on its own". Go to Home instead (what the user
+        // expects on reopen). VOD still resumes in place from the saved point.
+        if (cur.isLive) {
+          router.replace('/(tabs)/home');
+          return;
+        }
         const url = cur.candidates[attempt.current] || cur.candidates[0];
         if (!url) return;
         setBuffering(true);
@@ -244,7 +251,7 @@ export default function Player() {
       }
     });
     return () => sub.remove();
-  }, [player, cur.candidates, cur.isLive]);
+  }, [player, cur.candidates, cur.isLive, router]);
 
   const showOverlay = useCallback(() => {
     setOverlay(true);
