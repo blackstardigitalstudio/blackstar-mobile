@@ -1,6 +1,7 @@
 import React from 'react';
 import { FlatList, useWindowDimensions, View } from 'react-native';
 import { Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '@/theme/tokens';
 import type { MediaItem } from '@/lib/types';
 import { cardHeight, ChannelCard, DEFAULT_CARD, PosterCard } from './Card';
@@ -64,6 +65,7 @@ export function MediaGrid({
   empty?: React.ReactElement;
 }) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const pad = spacing.lg;
   const gap = spacing.md;
   // 3 columns on a phone, more on wider screens.
@@ -79,7 +81,7 @@ export function MediaGrid({
       ListHeaderComponent={header}
       ListEmptyComponent={empty}
       columnWrapperStyle={{ gap, paddingHorizontal: pad }}
-      contentContainerStyle={{ gap, paddingTop: spacing.sm, paddingBottom: spacing.xxl }}
+      contentContainerStyle={{ gap, paddingTop: spacing.sm, paddingBottom: insets.bottom + spacing.xxl }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       initialNumToRender={cols * 6}

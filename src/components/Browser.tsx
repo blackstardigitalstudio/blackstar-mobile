@@ -54,6 +54,7 @@ function iconForCategory(name: string): any {
 function FolderTile({
   name,
   count,
+  countKey,
   icon,
   width,
   pinned,
@@ -62,6 +63,7 @@ function FolderTile({
 }: {
   name: string;
   count: number;
+  countKey: string;
   icon: any;
   width: number;
   pinned?: boolean;
@@ -88,7 +90,7 @@ function FolderTile({
         {name}
       </Txt>
       <Txt variant="small" color={colors.textMuted} style={{ marginTop: 2 }}>
-        {t('br.channelsCount', { n: count })}
+        {t(countKey, { n: count })}
       </Txt>
     </Pressable>
   );
@@ -176,6 +178,10 @@ export function Browser({
     return <Empty title={t('br.empty', { title })} hint={t('br.emptyHint')} />;
   }
 
+  // Kind-aware labels so folders read right in Film/Serie too (not "canali").
+  const allLabel = kind === 'movie' ? t('br.allMovies') : kind === 'series' ? t('br.allSeries') : t('br.allChannels');
+  const countKey = kind === 'movie' ? 'br.moviesCount' : kind === 'series' ? 'br.seriesCount' : 'br.channelsCount';
+
   const filteredBy = (id: string) =>
     id === 'all'
       ? items
@@ -191,7 +197,7 @@ export function Browser({
     if (openCat) {
       const folderName =
         openCat === 'all'
-          ? t('br.allChannels')
+          ? allLabel
           : openCat === 'fav'
             ? t('br.favorites')
             : openCat === 'recent'
@@ -230,7 +236,10 @@ export function Browser({
         recentCount={recentItems.length}
         pins={pins}
         onTogglePin={togglePin}
+        allLabel={allLabel}
+        countKey={countKey}
         topInset={insets.top}
+        bottomInset={insets.bottom}
         onOpen={setOpenCat}
       />
     );
@@ -286,7 +295,10 @@ function FolderGrid({
   recentCount,
   pins,
   onTogglePin,
+  allLabel,
+  countKey,
   topInset,
+  bottomInset,
   onOpen,
 }: {
   title: string;
@@ -297,7 +309,10 @@ function FolderGrid({
   recentCount: number;
   pins: string[];
   onTogglePin: (id: string) => void;
+  allLabel: string;
+  countKey: string;
   topInset: number;
+  bottomInset: number;
   onOpen: (id: string) => void;
 }) {
   const t = useT();
@@ -312,7 +327,7 @@ function FolderGrid({
   const tiles = [
     ...(favCount > 0 ? [{ id: 'fav', name: t('br.favorites'), count: favCount, icon: 'heart' as any }] : []),
     ...(recentCount > 0 ? [{ id: 'recent', name: t('br.recent'), count: recentCount, icon: 'time' as any }] : []),
-    { id: 'all', name: t('br.allChannels'), count: total, icon: 'tv' as any },
+    { id: 'all', name: allLabel, count: total, icon: 'tv' as any },
     ...cats.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0, icon: iconForCategory(c.name) })),
   ];
 
@@ -327,7 +342,7 @@ function FolderGrid({
         </Txt>
       </View>
       <ScrollView
-        contentContainerStyle={styles.folderGrid}
+        contentContainerStyle={[styles.folderGrid, { paddingBottom: bottomInset + spacing.xxl }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -338,6 +353,7 @@ function FolderGrid({
               key={tile.id}
               name={tile.name}
               count={tile.count}
+              countKey={countKey}
               icon={tile.icon}
               width={tileW}
               pinned={!special && pins.includes(tile.id)}

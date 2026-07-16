@@ -80,7 +80,11 @@ const it: Dict = {
   'br.favorites': 'Preferiti',
   'br.recent': 'Visti di recente',
   'br.allChannels': 'Tutti i canali',
+  'br.allMovies': 'Tutti i film',
+  'br.allSeries': 'Tutte le serie',
   'br.channelsCount': '{n} canali',
+  'br.moviesCount': '{n} film',
+  'br.seriesCount': '{n} serie',
   'br.backToFolders': 'Categorie',
   'br.pickFolder': 'Scegli una categoria',
 
@@ -307,7 +311,11 @@ const es: Dict = {
   'br.favorites': 'Favoritos',
   'br.recent': 'Vistos recientemente',
   'br.allChannels': 'Todos los canales',
+  'br.allMovies': 'Todas las películas',
+  'br.allSeries': 'Todas las series',
   'br.channelsCount': '{n} canales',
+  'br.moviesCount': '{n} películas',
+  'br.seriesCount': '{n} series',
   'br.backToFolders': 'Categorías',
   'br.pickFolder': 'Elige una categoría',
 
