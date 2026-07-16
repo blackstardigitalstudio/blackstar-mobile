@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, BackHandler, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FocusScrollView } from '@/tv/FocusScroll';
 import { ContinueRail } from '@/components/ContinueRail';
 import { Rail } from '@/components/Rail';
@@ -45,6 +46,7 @@ function Folder({ label, icon, color, count, onPress }: { label: string; icon: a
 
 export default function Home() {
   const t = useT();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const play = usePlayback();
   const content = useVisibleContent();
@@ -152,7 +154,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Txt variant="h2" numberOfLines={1}>{bannerText || 'Blackstar'}</Txt>
         <GhostButton label={t('common.refresh')} icon="refresh" onPress={() => useStore.getState().refresh(true)} />
       </View>

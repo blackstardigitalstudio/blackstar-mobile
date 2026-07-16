@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FocusScrollView } from '@/tv/FocusScroll';
 import { Rail } from '@/components/Rail';
 import { Empty, Txt } from '@/components/ui';
@@ -15,6 +16,7 @@ import { colors, font, radius, spacing } from '@/theme/tokens';
 
 export default function Search() {
   const t = useT();
+  const insets = useSafeAreaInsets();
   const play = usePlayback();
   const content = useVisibleContent();
   const [q, setQ] = useState('');
@@ -55,7 +57,7 @@ export default function Search() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.searchBar}>
+      <View style={[styles.searchBar, { paddingTop: insets.top + spacing.sm }]}>
         <Ionicons name="search" size={22} color={colors.textMuted} />
         {/* Direct TextInput — never wrap in a touchable on mobile (Android
             responder conflict swallows taps and blocks typing). */}
