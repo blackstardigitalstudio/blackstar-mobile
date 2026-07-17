@@ -52,6 +52,8 @@ const it: Dict = {
     'Per scrivere: seleziona un campo e premi OK per aprire la tastiera. Puoi digitare dal telefono con l’app “Google TV” o “Android TV Remote” collegata al box (tocca l’icona tastiera), oppure con una tastiera Bluetooth.',
   'ob.errM3uUrl': 'Inserisci l’URL della lista M3U.',
   'ob.errHttp': 'Errore caricamento lista (HTTP {code}).',
+  'ob.errHttp403':
+    'Il server ha rifiutato la richiesta (403). Controlla che il link sia copiato per intero e che l’abbonamento sia attivo.',
   'ob.errEmpty': 'Nessun canale trovato nella lista.',
   'ob.errXtreamFields': 'Inserisci almeno un indirizzo server, username e password.',
   'ob.errGeneric': 'Accesso non riuscito. Controlla credenziali e DNS.',
@@ -285,6 +287,8 @@ const es: Dict = {
     'Para escribir: selecciona un campo y pulsa OK para abrir el teclado. Puedes teclear desde el móvil con la app “Google TV” o “Android TV Remote” conectada al box (toca el icono del teclado), o con un teclado Bluetooth.',
   'ob.errM3uUrl': 'Introduce la URL de la lista M3U.',
   'ob.errHttp': 'Error al cargar la lista (HTTP {code}).',
+  'ob.errHttp403':
+    'El servidor ha rechazado la solicitud (403). Comprueba que el enlace est� copiado completo y que la suscripci�n est� activa.',
   'ob.errEmpty': 'No se han encontrado canales en la lista.',
   'ob.errXtreamFields': 'Rellena al menos una dirección de servidor, usuario y contraseña.',
   'ob.errGeneric': 'No se ha podido acceder. Revisa credenciales y DNS.',
